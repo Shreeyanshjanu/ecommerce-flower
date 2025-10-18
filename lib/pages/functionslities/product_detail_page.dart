@@ -12,6 +12,8 @@ class ProductDetailPage extends ConsumerWidget {
   final String productName;
   final String categoryName;
   final double price;
+  final String description;
+  final double rating;
 
   const ProductDetailPage({
     Key? key,
@@ -19,6 +21,8 @@ class ProductDetailPage extends ConsumerWidget {
     required this.productName,
     required this.categoryName,
     this.price = 100.0,
+    this.description = '',
+    this.rating = 4.5,
   }) : super(key: key);
 
   @override
@@ -43,9 +47,7 @@ class ProductDetailPage extends ConsumerWidget {
         actions: [
           Consumer(
             builder: (context, ref, _) {
-              // Create a unique product ID
-              final productId =
-                  productName; // or use a better unique ID if you have one
+              final productId = productName;
               final isFav = ref
                   .read(favoriteProvider.notifier)
                   .isFavorite(productId);
@@ -229,18 +231,18 @@ class ProductDetailPage extends ConsumerWidget {
                   Row(
                     children: [
                       ...List.generate(
-                        4,
-                        (index) =>
-                            Icon(Icons.star, color: Colors.amber, size: 20),
-                      ),
-                      Icon(
-                        Icons.star_border,
-                        color: Colors.grey.shade400,
-                        size: 20,
+                        5,
+                        (index) => Icon(
+                          index < rating.floor()
+                              ? Icons.star
+                              : Icons.star_border,
+                          color: Colors.amber,
+                          size: 20,
+                        ),
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '(4.5)',
+                        '(${rating.toStringAsFixed(1)})',
                         style: TextStyle(
                           color: Colors.grey.shade600,
                           fontSize: 14,
@@ -261,7 +263,9 @@ class ProductDetailPage extends ConsumerWidget {
                   ),
                   SizedBox(height: 12),
                   Text(
-                    'Fresh and beautiful ${categoryName.toLowerCase()}. Perfect for decorating your home or gifting to loved ones. These flowers are carefully selected and delivered fresh to ensure the best quality.',
+                    description.isEmpty
+                        ? 'Fresh and beautiful $categoryName. Perfect for decorating your home or gifting to loved ones. These flowers are carefully selected and delivered fresh to ensure the best quality.'
+                        : description,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey.shade700,

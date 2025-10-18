@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'package:bloom_boom/pages/login%20and%20signup/login_page.dart';
-import 'package:bloom_boom/services/email_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -14,26 +13,13 @@ class ForgotPasswordPage extends StatefulWidget {
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _otpController = TextEditingController();
-  final TextEditingController _newPasswordController =
-      TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
 
   bool _isLoading = false;
-  bool _isOtpSent = false;
-  bool _isOtpVerified = false;
-  bool _obscureNewPassword = true;
-  bool _obscureConfirmPassword = true;
-
-  String _generatedOtp = '';
+  bool _emailSent = false;
 
   @override
   void dispose() {
     _emailController.dispose();
-    _otpController.dispose();
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -91,17 +77,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           ),
                         ),
                         SizedBox(height: 8),
-                        Text(
-                          'Enter your email to reset password',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white70,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 30),
 
-                        if (!_isOtpSent) ...[
+                        if (!_emailSent) ...[
+                          Text(
+                            'Enter your email to receive reset link',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white70,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 30),
+
                           // Email Field
                           _buildTextField(
                             controller: _emailController,
@@ -111,67 +98,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           ),
                           SizedBox(height: 30),
 
-                          // Send OTP Button
+                          // Send Reset Link Button
                           _buildButton(
-                            text: 'Send OTP',
-                            onPressed: _sendOtp,
-                          ),
-                        ] else if (!_isOtpVerified) ...[
-                          // OTP Info
-                          Container(
-                            padding: EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(Icons.email_outlined,
-                                    color: Colors.white, size: 40),
-                                SizedBox(height: 12),
-                                Text(
-                                  'OTP sent to',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  _emailController.text,
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 24),
-
-                          // OTP Field
-                          _buildOtpField(),
-                          SizedBox(height: 16),
-
-                          // Resend OTP
-                          TextButton(
-                            onPressed: _isLoading ? null : _sendOtp,
-                            child: Text(
-                              'Resend OTP',
-                              style: TextStyle(
-                                color: _isLoading 
-                                    ? Colors.white30 
-                                    : Colors.white70,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 24),
-
-                          // Verify OTP Button
-                          _buildButton(
-                            text: 'Verify OTP',
-                            onPressed: _verifyOtp,
+                            text: 'Send Reset Link',
+                            onPressed: _sendPasswordResetEmail,
                           ),
                         ] else ...[
                           // Success message
@@ -184,23 +114,49 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             ),
                             child: Column(
                               children: [
-                                Icon(Icons.check_circle, 
-                                    color: Colors.white, size: 50),
-                                SizedBox(height: 12),
+                                Icon(Icons.mark_email_read, 
+                                    color: Colors.white, size: 60),
+                                SizedBox(height: 16),
                                 Text(
-                                  'OTP Verified Successfully!',
+                                  'Reset Link Sent!',
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 16,
+                                    fontSize: 20,
                                     fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 12),
+                                Text(
+                                  'Check your email inbox and click the link to reset your password.',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  _emailController.text,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  "Didn't receive the email?",
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
                                   ),
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  'Check your email for password reset link',
+                                  "• Check your spam/junk folder\n• Make sure email is correct\n• Wait 2-3 minutes and try again",
                                   style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
+                                    color: Colors.white60,
+                                    fontSize: 11,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -208,6 +164,25 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             ),
                           ),
                           SizedBox(height: 24),
+
+                          // Resend Link Button
+                          OutlinedButton(
+                            onPressed: () {
+                              setState(() {
+                                _emailSent = false;
+                              });
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: BorderSide(color: Colors.white.withOpacity(0.5)),
+                              padding: EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text('Resend Link'),
+                          ),
+                          SizedBox(height: 12),
 
                           // Back to Login Button
                           _buildButton(
@@ -224,8 +199,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
                         SizedBox(height: 16),
 
-                        // Back to Login
-                        if (!_isOtpVerified)
+                        // Back to Login Link
+                        if (!_emailSent)
                           TextButton(
                             onPressed: () => Navigator.pop(context),
                             child: Text(
@@ -273,77 +248,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           prefixIcon: Icon(icon, color: Colors.white70, size: 20),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPasswordField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    required bool obscure,
-    required VoidCallback onToggle,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscure,
-        style: TextStyle(color: Colors.white, fontSize: 16),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: Colors.white70, fontSize: 14),
-          prefixIcon: Icon(icon, color: Colors.white70, size: 20),
-          suffixIcon: IconButton(
-            icon: Icon(
-              obscure ? Icons.visibility_off : Icons.visibility,
-              color: Colors.white70,
-              size: 20,
-            ),
-            onPressed: onToggle,
-          ),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOtpField() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: TextField(
-        controller: _otpController,
-        keyboardType: TextInputType.number,
-        maxLength: 6,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 24,
-          letterSpacing: 8,
-          fontWeight: FontWeight.bold,
-        ),
-        decoration: InputDecoration(
-          hintText: '000000',
-          hintStyle: TextStyle(color: Colors.white30, letterSpacing: 8),
-          border: InputBorder.none,
-          counterText: '',
-          contentPadding: EdgeInsets.symmetric(vertical: 20),
         ),
       ),
     );
@@ -397,91 +301,65 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     );
   }
 
-  Future<void> _sendOtp() async {
+  Future<void> _sendPasswordResetEmail() async {
+    // Basic validation
     if (_emailController.text.trim().isEmpty) {
       _showError('Please enter your email');
       return;
     }
 
+    if (!_emailController.text.contains('@')) {
+      _showError('Please enter a valid email address');
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
-      // Check if email exists
-      final methods =
-          await _auth.fetchSignInMethodsForEmail(_emailController.text.trim());
-      if (methods.isEmpty) {
-        setState(() => _isLoading = false);
-        _showError('Email not registered');
-        return;
-      }
-
-      // Generate OTP
-      _generatedOtp = EmailService.generateOtp();
-
-      print('🚀 Attempting to send OTP for password reset...');
-
-      // Send OTP via Cloud Function
-      final success = await EmailService.sendOtpEmail(
+      // Just send the reset email - no need to check if email exists
+      // Firebase will handle it gracefully
+      await _auth.sendPasswordResetEmail(
         email: _emailController.text.trim(),
-        otp: _generatedOtp,
-        purpose: 'password-reset',
       );
 
-      if (success) {
-        setState(() {
-          _isOtpSent = true;
-          _isLoading = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ OTP sent to ${_emailController.text}'),
-            backgroundColor: Color(0xFF079A3D),
-            duration: Duration(seconds: 3),
-          ),
-        );
-      } else {
-        setState(() => _isLoading = false);
-        _showError('Failed to send OTP. Please try again.');
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      _showError(e.toString().replaceAll('Exception: ', ''));
-    }
-  }
-
-  Future<void> _verifyOtp() async {
-    if (_otpController.text.trim().isEmpty) {
-      _showError('Please enter OTP');
-      return;
-    }
-
-    if (_otpController.text != _generatedOtp) {
-      _showError('Invalid OTP. Please check and try again.');
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      // Send Firebase password reset email after OTP verification
-      await _auth.sendPasswordResetEmail(email: _emailController.text.trim());
-
       setState(() {
-        _isOtpVerified = true;
+        _emailSent = true;
         _isLoading = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('✅ Password reset link sent to your email!'),
+          content: Text('✅ Password reset link sent to ${_emailController.text}'),
           backgroundColor: Color(0xFF079A3D),
           duration: Duration(seconds: 4),
         ),
       );
+    } on FirebaseAuthException catch (e) {
+      setState(() => _isLoading = false);
+      
+      if (e.code == 'user-not-found') {
+        // For security, don't reveal if email exists
+        // Still show success to prevent email enumeration
+        setState(() {
+          _emailSent = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('If this email exists, a reset link has been sent'),
+            backgroundColor: Color(0xFF079A3D),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      } else if (e.code == 'invalid-email') {
+        _showError('Invalid email address');
+      } else if (e.code == 'too-many-requests') {
+        _showError('Too many attempts. Please try again in 15 minutes');
+      } else {
+        _showError('Error: ${e.message}');
+      }
     } catch (e) {
       setState(() => _isLoading = false);
-      _showError('Error sending reset link: ${e.toString()}');
+      _showError('Failed to send reset link. Please check your internet connection');
     }
   }
 

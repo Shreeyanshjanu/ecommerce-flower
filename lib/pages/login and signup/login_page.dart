@@ -111,7 +111,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               'Forgot Password?',
                               style: TextStyle(
                                 color: Colors.white70,
-                                decoration: TextDecoration.underline,
+                                // decoration: TextDecoration.underline,
                               ),
                             ),
                           ),
@@ -266,27 +266,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               },
                               child: Text(
                                 'Sign Up',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('Forgot Password?'),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PwResetPage(),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                'Reset password',
                                 style: TextStyle(color: Colors.white),
                               ),
                             ),

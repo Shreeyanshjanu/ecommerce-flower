@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:bloom_boom/services/email_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -17,22 +16,17 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
-  final TextEditingController _otpController = TextEditingController();
 
   bool _isLoading = false;
-  bool _isOtpSent = false;
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
-
-  String _generatedOtp = '';
 
   @override
   void dispose() {
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
-    _otpController.dispose();
     super.dispose();
   }
 
@@ -99,106 +93,46 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                         ),
                         SizedBox(height: 30),
 
-                        if (!_isOtpSent) ...[
-                          // Current Password Field
-                          _buildPasswordField(
-                            controller: _currentPasswordController,
-                            hint: 'Current Password',
-                            icon: Icons.lock_outline,
-                            obscure: _obscureCurrentPassword,
-                            onToggle: () => setState(() =>
-                                _obscureCurrentPassword =
-                                    !_obscureCurrentPassword),
-                          ),
-                          SizedBox(height: 16),
+                        // Current Password Field
+                        _buildPasswordField(
+                          controller: _currentPasswordController,
+                          hint: 'Current Password',
+                          icon: Icons.lock_outline,
+                          obscure: _obscureCurrentPassword,
+                          onToggle: () => setState(() =>
+                              _obscureCurrentPassword =
+                                  !_obscureCurrentPassword),
+                        ),
+                        SizedBox(height: 16),
 
-                          // New Password Field
-                          _buildPasswordField(
-                            controller: _newPasswordController,
-                            hint: 'New Password',
-                            icon: Icons.lock,
-                            obscure: _obscureNewPassword,
-                            onToggle: () => setState(
-                                () => _obscureNewPassword = !_obscureNewPassword),
-                          ),
-                          SizedBox(height: 16),
+                        // New Password Field
+                        _buildPasswordField(
+                          controller: _newPasswordController,
+                          hint: 'New Password',
+                          icon: Icons.lock,
+                          obscure: _obscureNewPassword,
+                          onToggle: () => setState(
+                              () => _obscureNewPassword = !_obscureNewPassword),
+                        ),
+                        SizedBox(height: 16),
 
-                          // Confirm Password Field
-                          _buildPasswordField(
-                            controller: _confirmPasswordController,
-                            hint: 'Confirm New Password',
-                            icon: Icons.lock_clock,
-                            obscure: _obscureConfirmPassword,
-                            onToggle: () => setState(() =>
-                                _obscureConfirmPassword =
-                                    !_obscureConfirmPassword),
-                          ),
-                          SizedBox(height: 30),
+                        // Confirm Password Field
+                        _buildPasswordField(
+                          controller: _confirmPasswordController,
+                          hint: 'Confirm New Password',
+                          icon: Icons.lock_clock,
+                          obscure: _obscureConfirmPassword,
+                          onToggle: () => setState(() =>
+                              _obscureConfirmPassword =
+                                  !_obscureConfirmPassword),
+                        ),
+                        SizedBox(height: 30),
 
-                          // Send OTP Button
-                          _buildButton(
-                            text: 'Send OTP',
-                            onPressed: _sendOtp,
-                          ),
-                        ] else ...[
-                          // OTP Info
-                          Container(
-                            padding: EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(Icons.email_outlined,
-                                    color: Colors.white, size: 40),
-                                SizedBox(height: 12),
-                                Text(
-                                  'OTP sent to your email',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  _auth.currentUser?.email ?? '',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 24),
-
-                          // OTP Input Field
-                          _buildOtpField(),
-                          SizedBox(height: 16),
-
-                          // Resend OTP
-                          TextButton(
-                            onPressed: _isLoading ? null : _sendOtp,
-                            child: Text(
-                              'Resend OTP',
-                              style: TextStyle(
-                                color: _isLoading 
-                                    ? Colors.white30 
-                                    : Colors.white70,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 24),
-
-                          // Verify & Change Password Button
-                          _buildButton(
-                            text: 'Verify & Change Password',
-                            onPressed: _verifyOtpAndChangePassword,
-                          ),
-                        ],
+                        // Change Password Button
+                        _buildButton(
+                          text: 'Change Password',
+                          onPressed: _changePassword,
+                        ),
 
                         SizedBox(height: 16),
 
@@ -264,38 +198,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     );
   }
 
-  Widget _buildOtpField() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: TextField(
-        controller: _otpController,
-        keyboardType: TextInputType.number,
-        maxLength: 6,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 24,
-          letterSpacing: 8,
-          fontWeight: FontWeight.bold,
-        ),
-        decoration: InputDecoration(
-          hintText: '000000',
-          hintStyle: TextStyle(color: Colors.white30, letterSpacing: 8),
-          border: InputBorder.none,
-          counterText: '',
-          contentPadding: EdgeInsets.symmetric(vertical: 20),
-        ),
-      ),
-    );
-  }
-
   Widget _buildButton({required String text, required VoidCallback onPressed}) {
     return Container(
       width: double.infinity,
@@ -344,100 +246,45 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     );
   }
 
-  Future<void> _sendOtp() async {
+  Future<void> _changePassword() async {
     // Validate inputs
-    if (!_isOtpSent) {
-      if (_currentPasswordController.text.isEmpty ||
-          _newPasswordController.text.isEmpty ||
-          _confirmPasswordController.text.isEmpty) {
-        _showError('Please fill all fields');
-        return;
-      }
-
-      if (_newPasswordController.text != _confirmPasswordController.text) {
-        _showError('Passwords do not match');
-        return;
-      }
-
-      if (_newPasswordController.text.length < 6) {
-        _showError('Password must be at least 6 characters');
-        return;
-      }
-
-      // Verify current password
-      setState(() => _isLoading = true);
-      try {
-        final user = _auth.currentUser;
-        if (user == null) {
-          setState(() => _isLoading = false);
-          _showError('No user logged in');
-          return;
-        }
-
-        final credential = EmailAuthProvider.credential(
-          email: user.email!,
-          password: _currentPasswordController.text,
-        );
-        await user.reauthenticateWithCredential(credential);
-      } catch (e) {
-        setState(() => _isLoading = false);
-        _showError('Current password is incorrect');
-        return;
-      }
-    }
-
-    // Generate OTP
-    _generatedOtp = EmailService.generateOtp();
-
-    // Send OTP via Cloud Function
-    try {
-      print('🚀 Attempting to send OTP email...');
-      
-      final success = await EmailService.sendOtpEmail(
-        email: _auth.currentUser!.email!,
-        otp: _generatedOtp,
-        purpose: 'password-change',
-      );
-
-      if (success) {
-        setState(() {
-          _isOtpSent = true;
-          _isLoading = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ OTP sent to ${_auth.currentUser?.email}'),
-            backgroundColor: Color(0xFF079A3D),
-            duration: Duration(seconds: 3),
-          ),
-        );
-      } else {
-        setState(() => _isLoading = false);
-        _showError('Failed to send OTP. Please try again.');
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      _showError(e.toString().replaceAll('Exception: ', ''));
-    }
-  }
-
-  Future<void> _verifyOtpAndChangePassword() async {
-    if (_otpController.text.isEmpty) {
-      _showError('Please enter OTP');
+    if (_currentPasswordController.text.isEmpty ||
+        _newPasswordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
+      _showError('Please fill all fields');
       return;
     }
 
-    if (_otpController.text != _generatedOtp) {
-      _showError('Invalid OTP');
+    if (_newPasswordController.text != _confirmPasswordController.text) {
+      _showError('New passwords do not match');
+      return;
+    }
+
+    if (_newPasswordController.text.length < 6) {
+      _showError('Password must be at least 6 characters');
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      // Change password
-      await _auth.currentUser?.updatePassword(_newPasswordController.text);
+      final user = _auth.currentUser;
+      if (user == null) {
+        setState(() => _isLoading = false);
+        _showError('No user logged in');
+        return;
+      }
+
+      // Verify current password by re-authentication
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: _currentPasswordController.text,
+      );
+      
+      await user.reauthenticateWithCredential(credential);
+
+      // Change to new password
+      await user.updatePassword(_newPasswordController.text);
 
       if (mounted) {
         Navigator.pop(context);
@@ -448,10 +295,21 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           ),
         );
       }
-    } catch (e) {
-      _showError('Error changing password: ${e.toString()}');
-    } finally {
+    } on FirebaseAuthException catch (e) {
       setState(() => _isLoading = false);
+      
+      if (e.code == 'wrong-password') {
+        _showError('Current password is incorrect');
+      } else if (e.code == 'weak-password') {
+        _showError('New password is too weak');
+      } else if (e.code == 'requires-recent-login') {
+        _showError('Please log out and log in again to change password');
+      } else {
+        _showError('Error: ${e.message}');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showError('Failed to change password');
     }
   }
 

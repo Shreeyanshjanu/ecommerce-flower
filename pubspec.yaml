@@ -44,6 +44,7 @@ dependencies:
   palette_generator: ^0.3.3+7
   url_launcher: ^6.2.1
   intl: ^0.18.1
+  image_picker: ^1.0.7
   
 
 dev_dependencies:
@@ -115,6 +116,7 @@ flutter:
     - assets/images/graduation.png
     - assets/images/sympathy.png
     - assets/images/wedding_romance.png
+    - assets/images/home_header.png
     
     
 

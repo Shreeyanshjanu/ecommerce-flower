@@ -21,15 +21,14 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey =
-      GlobalKey<ScaffoldState>(); // Add this
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
     final cartState = ref.watch(cartProvider);
 
     return Scaffold(
-      key: _scaffoldKey, // Add this
+      key: _scaffoldKey,
       drawer: Drawer(
         child: Container(
           decoration: BoxDecoration(
@@ -42,7 +41,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             children: [
               // Drawer Header
               Container(
-                height: 100, // Set your desired height
+                height: 100,
                 decoration: BoxDecoration(color: Colors.black.withOpacity(0.3)),
                 padding: EdgeInsets.all(16),
                 child: Align(
@@ -149,22 +148,39 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: PromoBannerWidget(),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 200,
+            floating: true,
+            pinned: false,
+            snap: true,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Image.asset(
+                'assets/images/home_header.png',
+                fit: BoxFit.cover,
+              ),
             ),
-            SizedBox(height: 20),
-            Padding(padding: EdgeInsets.all(16), child: CategoryWidget()),
-            SizedBox(height: 20),
-            Padding(padding: EdgeInsets.all(16), child: OccasionWidget()),
-            SizedBox(height: 20),
-            Padding(padding: EdgeInsets.all(16), child: BestDealsWidget()),
-            SizedBox(height: 80), // Bottom padding for navigation bar
-          ],
-        ),
+          ),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                SizedBox(height: 40),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: PromoBannerWidget(),
+                ),
+                SizedBox(height: 20),
+                Padding(padding: EdgeInsets.all(16), child: CategoryWidget()),
+                SizedBox(height: 20),
+                Padding(padding: EdgeInsets.all(16), child: OccasionWidget()),
+                SizedBox(height: 20),
+                Padding(padding: EdgeInsets.all(16), child: BestDealsWidget()),
+                SizedBox(height: 80),
+              ],
+            ),
+          ),
+        ],
       ),
 
       // Bottom Navigation Bar with 3 icons
@@ -206,7 +222,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                 ),
 
-                // Orders Icon (Placeholder for now)
+                // Orders Icon
                 GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -233,7 +249,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                 // favorite page icon
                 GestureDetector(
                   onTap: () {
-                    // TODO: Navigate to Orders Page
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => FavoritesPage()),

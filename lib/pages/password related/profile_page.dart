@@ -1,19 +1,22 @@
 import 'dart:ui';
 import 'package:bloom_boom/pages/password%20related/change_password_page.dart';
 import 'package:bloom_boom/pages/password%20related/edit_profile_page.dart';
+import 'package:bloom_boom/auth/admin_provider.dart';
+import 'package:bloom_boom/admin/add_flower_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-class ProfilePage extends StatefulWidget {
+class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  ConsumerState<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends ConsumerState<ProfilePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -57,6 +60,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final user = _auth.currentUser;
+    final isAdminAsync = ref.watch(isAdminProvider);
 
     return Scaffold(
       body: Container(
@@ -91,7 +95,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                       Spacer(),
-                      SizedBox(width: 48), // Balance for back button
+                      SizedBox(width: 48),
                     ],
                   ),
                 ),
@@ -121,8 +125,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               children: [
                                 CircleAvatar(
                                   radius: 50,
-                                  backgroundColor:
-                                      Colors.white.withOpacity(0.2),
+                                  backgroundColor: Colors.white.withOpacity(0.2),
                                   child: user?.photoURL != null
                                       ? ClipOval(
                                           child: Image.network(
@@ -169,60 +172,81 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                             SizedBox(height: 4),
 
-                            // Email with verification badge
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  user?.email ?? '',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                if (user?.emailVerified == true)
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.verified,
-                                          size: 12,
-                                          color: Colors.white,
-                                        ),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          'Verified',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                else
-                                  TextButton(
-                                    onPressed: _sendVerificationEmail,
+                            // Email with verification badge - FIXED VERSION
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Flexible(
                                     child: Text(
-                                      'Verify Email',
+                                      user?.email ?? '',
                                       style: TextStyle(
-                                        color: Colors.orange,
-                                        fontSize: 12,
-                                        decoration: TextDecoration.underline,
+                                        color: Colors.white70,
+                                        fontSize: 13,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  SizedBox(width: 6),
+                                  if (user?.emailVerified == true)
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.verified,
+                                            size: 10,
+                                            color: Colors.white,
+                                          ),
+                                          SizedBox(width: 3),
+                                          Text(
+                                            'Verified',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  else
+                                    Container(
+                                      constraints: BoxConstraints(maxWidth: 70),
+                                      child: TextButton(
+                                        onPressed: _sendVerificationEmail,
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 2,
+                                          ),
+                                          minimumSize: Size(0, 0),
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        child: Text(
+                                          'Verify',
+                                          style: TextStyle(
+                                            color: Colors.orange,
+                                            fontSize: 11,
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                              ],
+                                ],
+                              ),
                             ),
                             SizedBox(height: 8),
 
@@ -241,8 +265,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               CircularProgressIndicator(color: Colors.white)
                             else
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
                                   _buildStat('Orders', _totalOrders.toString()),
                                   Container(
@@ -250,8 +273,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                     height: 40,
                                     color: Colors.white.withOpacity(0.3),
                                   ),
-                                  _buildStat('Spent',
-                                      '₹${_totalSpent.toStringAsFixed(0)}'),
+                                  _buildStat(
+                                      'Spent', '₹${_totalSpent.toStringAsFixed(0)}'),
                                 ],
                               ),
                             SizedBox(height: 24),
@@ -267,13 +290,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                       builder: (_) => EditProfilePage(),
                                     ),
                                   );
-                                  setState(() {}); // Refresh UI
+                                  setState(() {});
                                 },
                                 icon: Icon(Icons.edit),
                                 label: Text('Edit Profile'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      Colors.white.withOpacity(0.2),
+                                  backgroundColor: Colors.white.withOpacity(0.2),
                                   foregroundColor: Colors.white,
                                   padding: EdgeInsets.symmetric(vertical: 14),
                                   shape: RoundedRectangleBorder(
@@ -308,6 +330,80 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ),
                               ),
+                            ),
+                            SizedBox(height: 12),
+
+                            // ADMIN SECTION
+                            isAdminAsync.when(
+                              data: (isAdmin) {
+                                if (!isAdmin) return SizedBox.shrink();
+
+                                return Column(
+                                  children: [
+                                    // Admin badge
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.orange,
+                                            Colors.deepOrange
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.admin_panel_settings,
+                                              color: Colors.white, size: 16),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            'ADMIN',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(height: 12),
+
+                                    // Add Flower Button
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton.icon(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => AddFlowerPage(),
+                                            ),
+                                          );
+                                        },
+                                        icon: Icon(Icons.add_circle_outline),
+                                        label: Text('Add New Flower'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.orange,
+                                          foregroundColor: Colors.white,
+                                          padding:
+                                              EdgeInsets.symmetric(vertical: 14),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                              loading: () => SizedBox.shrink(),
+                              error: (_, __) => SizedBox.shrink(),
                             ),
                           ],
                         ),
